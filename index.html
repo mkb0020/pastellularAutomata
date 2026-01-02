@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <link rel="stylesheet" href="assets/css/KittyStyle.css">
+  <title>Pastellular Automata</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: linear-gradient(to bottom, #37025A 5%, #8a2be2 20%, #c71585 40%, #ff69b4 70%, #ff69b4 100%);
+      font-family: 'GothNerd', sans-serif;
+      color: white;
+      position: relative;
+      overflow: hidden;
+      height: 100vh;
+    }
+
+    strong {
+        color: #FFC7FF;
+    }
+
+    .dreamy-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(247, 246, 248, 0.034);
+      backdrop-filter: blur(50px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .sparkles {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 3;
+    }
+
+    .sparkle {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      background: radial-gradient(circle, rgba(255, 255, 255, 1) 0%, transparent 70%);
+      border-radius: 50%;
+      animation: twinkle linear infinite;
+      box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+    }
+
+    @keyframes twinkle {
+      0%, 100% {
+        opacity: 0;
+        transform: scale(0.5);
+      }
+      50% {
+        opacity: 1;
+        transform: scale(1.5);
+      }
+    }
+
+    .content-wrapper {
+      position: relative;
+      max-width: none;
+      margin: 0 auto;
+      padding: 0;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+      font-family: 'Orbitron', monospace;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: calc(100vh - 80px);
+      margin-top: 45px;
+    }
+
+    canvas {
+      border: 4px solid transparent; 
+      border-image: linear-gradient(45deg, var(--AquaAura), var(--NuclearFuscia)) 1; 
+      border-radius: 10px; 
+      box-shadow: 0 10px 60px var(--PlasmaGlow3);
+      background: #000000a0;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    .rules-toggle {
+      position: fixed;
+      bottom: 15px;
+      right: 20px;
+      z-index: 100;
+      background: linear-gradient(45deg,#c846d3, #FFC7FF);
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all 0.3s;
+      width: 45px;
+      height: 45px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .rules-toggle:hover {
+      background: linear-gradient(45deg, #9090C0, #67FEBD);
+    }
+
+    .toggle-img{
+      width: 45px;
+      height: 45px;
+    }
+
+    .rules-panel {
+      position: fixed;
+      top: 80px;
+      right: -400px;
+      width: 380px;
+      max-height: calc(100vh - 100px);
+      background: rgba(55, 2, 90, 0.95);
+      backdrop-filter: blur(10px);
+      border: 2px solid #DC4CE8;
+      border-radius: 15px;
+      padding: 20px;
+      z-index: 99;
+      transition: right 0.3s ease;
+      overflow-y: auto;
+      box-shadow: 0 0 30px rgba(220, 76, 232, 0.5);
+    }
+
+
+    .rules-panel::-webkit-scrollbar {
+        width: 12px;
+        }
+
+    .rules-panel::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 10px;
+      margin: 5px;
+    }
+
+    .rules-panel::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, #830CDE, #c846d3);
+      border-radius: 10px;
+      border: 2px solid rgba(255, 199, 255, 0.3);
+      box-shadow: 0 0 10px rgba(131, 12, 222, 0.5);
+    }
+
+    .rules-panel::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(180deg, #c846d3, #67FEBD);
+      box-shadow: 0 0 15px rgba(200, 70, 211, 0.8);
+    }
+
+    .rules-panel {
+      scrollbar-width: thin;
+      scrollbar-color: #c846d3 rgba(0, 0, 0, 0.3);
+    }
+
+    .rules-panel.open {
+      right: 20px;
+    }
+
+    .rules-panel h2 {
+      color: #67FEBD;
+      margin-top: 0;
+      font-size: 1.5rem;
+    }
+
+    .rules-panel h3 {
+      color: #FFC7FF;
+      font-size: 1.1rem;
+      margin: 15px 0 8px 0;
+    }
+
+    .preset-select {
+      width: 100%;
+      padding: 8px;
+      background: rgba(0, 0, 0, 0.5);
+      color: white;
+      border: 2px solid #c846d3;
+      border-radius: 8px;
+      font-family: 'GothNerd', sans-serif;
+      font-size: 0.9rem;
+      margin-bottom: 15px;
+      cursor: pointer;
+    }
+
+    .rule-group {
+      margin-bottom: 15px;
+    }
+
+    .rule-checkboxes {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 6px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: 1px solid transparent;
+    }
+
+    .checkbox-label:hover {
+      background: rgba(138, 43, 226, 0.3);
+      border-color: #c846d3;
+    }
+
+    .checkbox-label input {
+      margin-right: 6px;
+      cursor: pointer;
+    }
+
+    .reset-button {
+      width: 100%;
+      padding: 7px;
+      background: linear-gradient(45deg, #830CDE, #c846d3);
+      color: white;
+      border: 2px solid #FFC7FF;
+      border-radius: 20px;
+      font-family: 'GothNerd', sans-serif;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 0 15px #830CDE;
+      margin-top: 10px;
+      text-transform: uppercase;
+    }
+
+    .reset-button:hover {
+      background: linear-gradient(45deg, #c846d3, #67FEBD);
+      box-shadow: 0 0 30px #c846d3;
+    }
+
+    .info-text {
+      font-size: 0.85rem;
+      color: #ddd;
+      margin-top: 10px;
+      padding: 10px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 8px;
+      line-height: 1.4;
+    }
+
+    @media (max-width: 767px) {
+      .hero-content {
+        padding: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="dreamy-overlay"></div>
+
+  <div class="content-wrapper">
+
+  <div class="sparkles" id="sparkles"></div>
+
+  <nav class="navbar">
+    <div class="nav-container">
+      
+      <div class="left-dropdown"><!-- LEFT DROPDOWN MENU -->
+        <button class="menu-trigger" aria-label="Menu">
+          <img src="/assets/images/Niels2.png" alt="Menu" class="home-icon">
+        </button>
+
+        <div class="left-menu">
+          <a href="https://mkb0020.vercel.app/" class="menu-item">Home</a>
+          <a href="https://mkb0020.github.io/Toolkit.html" class="menu-item">Schrödinger's Toolbox</a>
+          <a href="https://mkb0020.vercel.app/comments" class="menu-item">Guestbook</a>
+
+          <div class="social-links">
+            <a href="https://www.youtube.com/@mkb0020" target="_blank" aria-label="YouTube">
+              <img src="/assets/images/youtube-icon.png" alt="YouTube" class="social-icon">
+            </a>
+          
+            <a href="https://www.linkedin.com/in/mkb0020/" target="_blank" aria-label="LinkedIn">
+              <img src="/assets/images/linkedin-icon.png" alt="LinkedIn" class="social-icon">
+            </a>
+
+            <a href="https://mkb0020.github.io/MKLambda.html" target="_blank" aria-label="YouTube">
+              <img src="/assets/images/music-icon.png" alt="YouTube" class="social-icon">
+            </a>
+
+            <a href="https://github.com/mkb0020" target="_blank" aria-label="GitHub">
+              <img src="/assets/images/github-icon.png" alt="GitHub" class="social-icon">
+            </a>
+
+            <a href="https://mkb0020.itch.io" target="_blank" aria-label="YouTube">
+              <img src="/assets/images/itchio-icon.png" alt="YouTube" class="social-icon">
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <a href="https://mkb0020.github.io">
+        <div class="logo">♡ mkb0020</div>  <!-- CENTER LOGO -->
+      </a>
+ 
+      <div class="help-dropdown"> <!-- RIGHT HELP DROPDOWN -->
+        <button class="help-icon" id="helpBtn" aria-label="Help Menu">
+          <div class="question-mark">?</div>
+        </button>
+        
+        <div class="dropdown-menu" id="dropdownMenu">
+          <button id="openMainHelp">About</button>
+          <a href="https://mkb0020.vercel.app/support" class="menu-item">Report an Issue</a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <div id="helpModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title">Cellular Automaton Simulator</h1>
+        <button class="modal-close" id="closeModal">X</button>
+      </div>
+      <div class="modal-body">
+        <h3>Controls:</h3>
+        <ul>
+        <li><strong>Click or tap the D20 on the bottom-right</strong> to open the controls panel</li>
+        <li><strong>Use the drop down</strong> to select a preset rule set</li>
+        <li><strong>Use the check-boxes</strong> to make your own rules and see what happens!</li>
+        </ul> 
+        <h3>What is a Cellular Automaton? </h3>
+        <p> Cellular automata are simple rule-based systems where:
+            <ul>
+                <li>You have a grid of cells</li>
+                <li>Each cell has a state (on/off, 0/1, etc.)</li>
+                <li>Time moves in step</li>
+            </ul>
+        </p>
+        <p>At each step, every cell updates its state based on:
+        <ul>
+         <li>Its current state </li>
+        <li>The state of its neighboring cells</li>
+        <li>A small set of rules</li>
+         </ul>
+        </p>
+        <p>Even though the rules are simple, the results can be wildly complex and beautiful.
+        </p>
+        <h3>Why are cellular automata important?</h3>
+        <ul>
+        <li>
+            <strong>Simple rules, complex behavior:</strong> Cellular automata show how very simple local rules can generate highly complex global patterns. 
+            This idea is central in complexity science and helps us understand how intricate structures can emerge in nature.
+        </li>
+        <li>
+            <strong>Models of natural systems:</strong> They are used as abstract models of physical, biological, and social systems, 
+            such as fluid flow, crystal growth, forest fires, traffic, and population dynamics.
+        </li>
+        <li>
+            <strong>Computation and universality:</strong> Some cellular automata can perform any computation that a computer can, 
+            showing that computation can emerge from simple, local interactions.
+        </li>
+        <li>
+            <strong>Randomness and cryptography:</strong> Certain rules generate patterns that look random and are studied for uses in 
+            random number generation and cryptographic systems.
+        </li>
+        </ul>     
+    </div>
+    </div>
+  </div>
+
+  <div class="hero-content">
+    <canvas id="canvas"></canvas>
+  </div>
+
+  <button id="rulesToggle" class="rules-toggle" aria-label="Toggle Rules Panel">
+    <img src="assets/images/D20.png" alt="SETTINGS" class="toggle-img">
+  </button>
+
+  <div id="rulesPanel" class="rules-panel">
+    <h2>Cellular Automata Rules</h2>
+    
+    <h3>Presets</h3>
+    <select id="presetSelect" class="preset-select">
+      <option value="Conway's Life">Conway's Life (Classic)</option>
+      <option value="High Life">High Life</option>
+      <option value="Day & Night">Day & Night</option>
+      <option value="Seeds">Seeds</option>
+      <option value="Replicator">Replicator</option>
+      <option value="Maze">Maze</option>
+      <option value="Coral">Coral</option>
+      <option value="Amoeba">Amoeba</option>
+    </select>
+
+    <h3>Survival Rules</h3>
+    <div class="rule-group">
+      <div class="rule-checkboxes">
+        <label class="checkbox-label">
+          <input type="checkbox" id="survive0"> 0
+        </label>
+        <label class="checkbox-label">
+          <input type="checkbox" id="survive1"> 1
+        </label>
+        <label class="checkbox-label">
+          <input type="checkbox" id="survive2"> 2
+        </label>
+        <label class="checkbox-label">
+          <input type="checkbox" id="survive3"> 3
+        </label>
+        <label class="checkbox-label">
+          <input type="checkbox" id="survive4"> 4
+        </label>
+        <label class="checkbox-label">
+          <input type="checkbox" id="survive5"> 5
+        </label>
+        <label class="checkbox-label">
+          <input type="checkbox" id="survive6"> 6
+        </label>
+        <label class="checkbox-label">
+          <input type="checkbox" id="survive7"> 7
+        </label>
+        <label class="checkbox-label">
+          <input type="checkbox" id="survive8"> 8
+        </label>
+      </div>
+    </div>
+
+    <h3>Birth Rules</h3>
+    <div class="rule-group">
+      <div class="rule-checkboxes">
+        <label class="checkbox-label">
+          <input type="checkbox" id="birth0"> 0
+        </label>
+        <label class="checkbox-label">
+          <input type="checkbox" id="birth1"> 1
+        </label>
+        <label class="checkbox-label">
+          <input type="checkbox" id="birth2"> 2
+        </label>
+        <label class="checkbox-label">
+          <input type="checkbox" id="birth3"> 3
+        </label>
+        <label class="checkbox-label">
+          <input type="checkbox" id="birth4"> 4
+        </label>
+        <label class="checkbox-label">
+          <input type="checkbox" id="birth5"> 5
+        </label>
+        <label class="checkbox-label">
+          <input type="checkbox" id="birth6"> 6
+        </label>
+        <label class="checkbox-label">
+          <input type="checkbox" id="birth7"> 7
+        </label>
+        <label class="checkbox-label">
+          <input type="checkbox" id="birth8"> 8
+        </label>
+      </div>
+    </div>
+
+    <button id="resetBtn" class="reset-button">Reset Grid</button>
+
+    <div class="info-text">
+      <strong>Survival:</strong> Live cells survive with this many neighbors<br>
+      <strong>Birth:</strong> Dead cells become alive with this many neighbors<br><br>
+      Click the canvas to start/stop!
+    </div>
+  </div>
+
+  <div id="kofi-float">
+    <a href="https://ko-fi.com/mkb0020" target="_blank" rel="noopener noreferrer">
+      <img src="assets/images/tipjar.png" alt="Support me on Ko-fi">
+      <div class="hearts">
+        <div class="heart" style="--delay: 0s; --drift: -20px;">❤️</div>
+        <div class="heart" style="--delay: 0.5s; --drift: 15px;">💖</div>
+        <div class="heart" style="--delay: 1s; --drift: -10px;">💕</div>
+        <div class="heart" style="--delay: 1.5s; --drift: 20px;">❤️</div>
+        <div class="heart" style="--delay: 2s; --drift: -15px;">💗</div>
+        <div class="heart" style="--delay: 2.5s; --drift: 10px;">💖</div>
+      </div>
+    </a>
+  </div>
+
+
+
+  </div>
+
+  <script type="module" src="js/cellularAutomata.js"></script>
+  <script src="js/KittyCore.js"></script>
+
+  <script>
+    const button = document.getElementById('kofi-float');
+    button.addEventListener('mouseenter', () => {
+      document.querySelectorAll('.heart').forEach(h => {
+        h.style.animation = 'none';
+        h.offsetHeight; 
+        h.style.animation = null;
+      });
+    });
+  </script>
+    
+  <script>
+    const sparklesContainer = document.getElementById('sparkles');
+    
+    function createSparkle() {
+      const sparkle = document.createElement('div');
+      sparkle.className = 'sparkle';
+      
+      const left = Math.random() * 100;
+      const top = Math.random() * 100;
+      const duration = Math.random() * 2 + 1;
+      const delay = Math.random() * 2;
+      
+      const colors = [
+        'rgba(255, 105, 180, 1)',
+        'rgba(138, 43, 226, 1)',
+        'rgba(0, 255, 204, 1)',
+        'rgba(255, 255, 255, 1)'
+      ];
+      const color = colors[Math.floor(Math.random() * colors.length)];
+      
+      sparkle.style.left = `${left}%`;
+      sparkle.style.top = `${top}%`;
+      sparkle.style.animationDuration = `${duration}s`;
+      sparkle.style.animationDelay = `${delay}s`;
+      sparkle.style.background = `radial-gradient(circle, ${color} 0%, transparent 70%)`;
+      sparkle.style.boxShadow = `0 0 8px ${color}`;
+      
+      sparklesContainer.appendChild(sparkle);
+      
+      setTimeout(() => {
+        sparkle.remove();
+      }, (duration + delay) * 1000);
+    }
+
+    setInterval(createSparkle, 300);
+    
+    for (let i = 0; i < 30; i++) {
+      setTimeout(createSparkle, i * 100);
+    }
+  </script>
+
+</body>
+</html>
