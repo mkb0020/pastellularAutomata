@@ -455,14 +455,13 @@ body, html {
 }
 
 .mission-text {
-  font-size: 1.3rem;
-  text-align: center;
+  font-size: 1.2rem;
+  text-align: left;
   margin: 2.5rem 0;
   padding: 1rem;
-  background: var(--PlasmaPurple);
-  border-left: 7px solid var(--PlasmaPurple);
-  border-radius: 5px;
-  color: var(--White);
+  background: rgba(131,12,222, 0.3);
+  border-radius: 25px;
+  color: var(--AlphaAqua);
   font-family: Arial, Helvetica, sans-serif;
 }
 
