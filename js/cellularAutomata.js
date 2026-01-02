@@ -1,9 +1,16 @@
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
+const lofi = new Audio("assets/sounds/isotopes.mp3");
+lofi.loop = true;
+lofi.volume = 0.6;
+
+
 let cols, rows;
 let cellSize;
 let grid = [];
+
+let hasStarted = false;
 
 let running = false;
 let interval;
@@ -86,6 +93,26 @@ function drawGrid() {
       }
     }
   }
+
+
+  // CLICK TO START OVERLAY
+  if (!hasStarted && !running) {
+    ctx.fillStyle = "rgba(255, 199, 255, 0.75)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = "rgba(42,52,57)";
+    ctx.font = "600 30px system-ui, -apple-system, BlinkMacSystemFont";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+
+    ctx.fillText(
+      "CLICK OR TAP TO START",
+      canvas.width / 2,
+      canvas.height / 2
+    );
+  }
+
+
 }
 
 function countNeighbors(x, y) {
@@ -139,6 +166,13 @@ function toggleRun() {
 
 canvas.addEventListener("pointerdown", (e) => {
   e.preventDefault();
+
+  if (!hasStarted) {
+    hasStarted = true;
+  
+    lofi.play().catch(() => {});
+  }
+
   toggleRun();
 });
 
@@ -198,6 +232,20 @@ function resetGrid() {
 }
 
 document.getElementById("resetBtn").addEventListener("click", resetGrid);
+
+
+const audioToggle = document.getElementById("audioToggle");
+
+audioToggle.addEventListener("click", () => {
+  if (lofi.paused) {
+    lofi.play().catch(() => {});
+    audioToggle.textContent = "⏸️🎵";
+  } else {
+    lofi.pause();
+    audioToggle.textContent = "▶️🎵";
+  }
+});
+
 
 resizeCanvas();
 drawGrid();
